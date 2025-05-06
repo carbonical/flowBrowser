@@ -2,10 +2,10 @@
   "version": 2,
   "functions": {
     "api/proxy.js": {
-      "runtime": "node@18.x"
+      "runtime": "@vercel/node"
     },
     "api/python_proxy.py": {
-      "runtime": "python@3.9"
+      "runtime": "@vercel/python"
     }
   }
 }

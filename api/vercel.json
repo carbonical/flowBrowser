@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "functions": {
+    "api/proxy.js": {
+      "runtime": "nodejs18.x"
+    },
+    "api/python_proxy.py": {
+      "runtime": "python3.9"
+    }
+  }
+}

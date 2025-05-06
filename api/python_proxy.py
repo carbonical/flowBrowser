@@ -1,4 +1,3 @@
-# /api/python_proxy.py
 import requests
 from urllib.parse import urlparse
 

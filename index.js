@@ -33,11 +33,10 @@ app.use('/proxy', (req, res, next) => {
     // Parse the target URL from the query parameter
     const parsedUrl = new URL(targetUrl);
 
-    // Clean up the URL by removing any unwanted query parameters
-    // Make sure we don't forward any query parameters like `url`
-    parsedUrl.searchParams.delete('url'); // This ensures no 'url' query is forwarded
+    // Clean up the URL by removing any query parameters we don't want to forward
+    parsedUrl.searchParams.delete('url'); // Remove the 'url' parameter to avoid redirect loops
 
-    // Now set up the proxy middleware
+    // Create the proxy middleware with the cleaned-up target URL
     createProxyMiddleware({
       target: parsedUrl.toString(), // Use the cleaned URL
       changeOrigin: true,
@@ -45,8 +44,19 @@ app.use('/proxy', (req, res, next) => {
         '^/proxy': '', // Remove /proxy from the forwarded URL
       },
       onProxyReq: (proxyReq, req, res) => {
-        // Optionally, log the proxied request for debugging
+        // Optionally log the proxied request for debugging purposes
         console.log('Proxying request to:', parsedUrl.toString());
+      },
+      // Handle the response to ensure that redirects are not followed
+      onProxyRes: (proxyRes, req, res) => {
+        // Check if the response is a redirect (HTTP status 3xx)
+        if (proxyRes.statusCode >= 300 && proxyRes.statusCode < 400) {
+          // Log the redirection response
+          console.log('Redirect detected:', proxyRes.headers.location);
+          
+          // Instead of following the redirect, you can choose to handle it or just forward the original response
+          res.status(proxyRes.statusCode).send('Redirects are not supported by this proxy.');
+        }
       }
     })(req, res, next);
 

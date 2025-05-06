@@ -1,7 +1,7 @@
 {
-  "name": "CamoAPI v2",
-  "version": "1.0.0",
-  "description": "CamoAPI V2, an insane proxy",
+  "name": "CamoAPI",
+  "version": "0.0.1",
+  "description": "An Insane, fast, awesome proxy",
   "main": "api/proxy.js",
   "scripts": {
     "dev": "vercel dev",

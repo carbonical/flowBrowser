@@ -13,15 +13,5 @@
   "engines": {
     "node": "18.x"
   },
-  "devDependencies": {},
-  "vercel": {
-    "functions": {
-      "api/proxy.js": {
-        "runtime": "nodejs18.x"
-      },
-      "api/python_proxy.py": {
-        "runtime": "python3.9"
-      }
-    }
-  }
+  "devDependencies": {}
 }

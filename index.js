@@ -1,19 +1,32 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const url = require('url');
 
 const app = express();
-const PORT = process.env.PORT || 3000;  // Use environment port or default to 3000
+const PORT = process.env.PORT || 3000;
 
-// Proxy setup
-app.use('/proxy', createProxyMiddleware({
-  target: 'http://example.com',  // Replace this with the target URL you want to proxy to
-  changeOrigin: true,            // Adjusts the origin header to match the target
-  pathRewrite: {
-    '^/proxy': '',              // Remove '/proxy' from the incoming URL path
-  },
-}));
+app.use('/proxy', (req, res, next) => {
+  const targetUrl = req.query.url;
 
-// Start the server
+  if (!targetUrl) {
+    return res.status(400).send('Missing "url" query parameter.');
+  }
+
+  try {
+    const parsedUrl = new URL(targetUrl);
+  } catch (e) {
+    return res.status(400).send('Invalid "url" query parameter.');
+  }
+
+  createProxyMiddleware({
+    target: targetUrl,
+    changeOrigin: true,
+    pathRewrite: {
+      '^/proxy': '',
+    },
+  })(req, res, next);
+});
+
 app.listen(PORT, () => {
-  console.log(`CamoAPI-V2 Proxy Server running at http://localhost:${PORT}`);
+  console.log(`Proxy server running at http://localhost:${PORT}`);
 });

@@ -1,17 +1,15 @@
 {
-  "name": "CamoAPI",
-  "version": "0.0.1",
-  "description": "An Insane, fast, awesome proxy",
-  "main": "api/proxy.js",
+  "name": "camoapi",
+  "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
     "start": "vercel start"
   },
   "dependencies": {
-    "node-fetch": "^3.0.0"
-  },
-  "engines": {
-    "node": "18.x"
-  },
-  "devDependencies": {}
+    "axios": "^0.21.1",
+    "express": "^4.17.1",
+    "cors": "^2.8.5",
+    "cheerio": "^1.0.0-rc.10"
+  }
 }

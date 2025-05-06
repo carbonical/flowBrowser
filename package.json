@@ -1,12 +1,27 @@
 {
-  "name": "CamoAPI-V2",
+  "name": "CamoAPI v2",
   "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "express": "^4.17.1",
-    "http-proxy-middleware": "^2.0.0"
-  },
+  "description": "CamoAPI V2, an insane proxy",
+  "main": "api/proxy.js",
   "scripts": {
-    "start": "node index.js"
+    "dev": "vercel dev",
+    "start": "vercel start"
+  },
+  "dependencies": {
+    "node-fetch": "^3.0.0"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "devDependencies": {},
+  "vercel": {
+    "functions": {
+      "api/proxy.js": {
+        "runtime": "nodejs18.x"
+      },
+      "api/python_proxy.py": {
+        "runtime": "python3.9"
+      }
+    }
   }
 }

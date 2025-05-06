@@ -3,9 +3,6 @@
   "functions": {
     "api/proxy.js": {
       "runtime": "@vercel/node"
-    },
-    "api/python_proxy.py": {
-      "runtime": "@vercel/python"
     }
   }
 }

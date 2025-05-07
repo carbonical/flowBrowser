@@ -82,4 +82,5 @@ app.get('/search', async (req, res) => {
   }
 });
 
+// This is the export Vercel needs for a serverless function
 module.exports = app;

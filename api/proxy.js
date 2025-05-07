@@ -40,33 +40,33 @@ app.get('/search', async (req, res) => {
     $('img').each((i, el) => {
       const src = $(el).attr('src');
       if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/proxy?url=${encodeURIComponent(src)}`);
+        $(el).attr('src', `/search?url=${encodeURIComponent(src)}`);
       }
     });
 
     $('a').each((i, el) => {
       const href = $(el).attr('href');
       if (href && !href.startsWith('http')) {
-        $(el).attr('href', `/proxy?url=${encodeURIComponent(href)}`);
+        $(el).attr('href', `/search?url=${encodeURIComponent(href)}`);
       }
     });
 
     $('video').each((i, el) => {
       const poster = $(el).attr('poster');
       if (poster && !poster.startsWith('http')) {
-        $(el).attr('poster', `/proxy?url=${encodeURIComponent(poster)}`);
+        $(el).attr('poster', `/search?url=${encodeURIComponent(poster)}`);
       }
 
       const src = $(el).attr('src');
       if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/proxy?url=${encodeURIComponent(src)}`);
+        $(el).attr('src', `/search?url=${encodeURIComponent(src)}`);
       }
     });
 
     $('form').each((i, el) => {
       const action = $(el).attr('action');
       if (action && !action.startsWith('http')) {
-        $(el).attr('action', `/proxy?url=${encodeURIComponent(action)}`);
+        $(el).attr('action', `/search?url=${encodeURIComponent(action)}`);
       }
     });
 
@@ -79,33 +79,6 @@ app.get('/search', async (req, res) => {
 
   } catch (error) {
     console.error('Error proxying request:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-app.get('/proxy', async (req, res) => {
-  const targetUrl = req.query.url;
-
-  if (!targetUrl) {
-    return res.status(400).json({ error: 'Missing URL parameter' });
-  }
-
-  try {
-    const response = await axios.get(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'text/html',
-      },
-      responseType: 'arraybuffer',
-    });
-
-    const contentType = response.headers['content-type'];
-    res.setHeader('Content-Type', contentType);
-
-    res.send(response.data);
-
-  } catch (error) {
-    console.error('Error proxying resource:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

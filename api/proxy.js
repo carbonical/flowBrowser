@@ -83,6 +83,4 @@ app.get('/search', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`CORS proxy server is running at http://localhost:${port}`);
-});
+module.exports = app;

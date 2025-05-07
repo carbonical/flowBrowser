@@ -1,8 +1,9 @@
+
 {
-  "version": 2,
   "functions": {
-    "api/proxy.js": {
-      "runtime": "@vercel/node"
+    "api/*": {
+      "memory": 2048,
+      "maxDuration": 30
     }
   }
 }

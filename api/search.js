@@ -6,6 +6,7 @@ const app = express();
 
 app.use(cors());
 
+// This will handle the OPTIONS preflight requests
 app.options('*', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -13,6 +14,7 @@ app.options('*', (req, res) => {
   res.status(200).end();
 });
 
+// Your actual /search route handler
 app.get('/search', async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -82,5 +84,5 @@ app.get('/search', async (req, res) => {
   }
 });
 
-// This is the export Vercel needs for a serverless function
+// Export the handler for Vercel
 module.exports = app;

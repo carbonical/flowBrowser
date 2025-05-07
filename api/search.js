@@ -39,33 +39,33 @@ app.get('/search', async (req, res) => {
     $('img').each((i, el) => {
       const src = $(el).attr('src');
       if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/search?url=${encodeURIComponent(src)}`);
+        $(el).attr('src', `/api/search?url=${encodeURIComponent(src)}`);
       }
     });
 
     $('a').each((i, el) => {
       const href = $(el).attr('href');
       if (href && !href.startsWith('http')) {
-        $(el).attr('href', `/search?url=${encodeURIComponent(href)}`);
+        $(el).attr('href', `/api/search?url=${encodeURIComponent(href)}`);
       }
     });
 
     $('video').each((i, el) => {
       const poster = $(el).attr('poster');
       if (poster && !poster.startsWith('http')) {
-        $(el).attr('poster', `/search?url=${encodeURIComponent(poster)}`);
+        $(el).attr('poster', `/api/search?url=${encodeURIComponent(poster)}`);
       }
 
       const src = $(el).attr('src');
       if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/search?url=${encodeURIComponent(src)}`);
+        $(el).attr('src', `/api/search?url=${encodeURIComponent(src)}`);
       }
     });
 
     $('form').each((i, el) => {
       const action = $(el).attr('action');
       if (action && !action.startsWith('http')) {
-        $(el).attr('action', `/search?url=${encodeURIComponent(action)}`);
+        $(el).attr('action', `/api/search?url=${encodeURIComponent(action)}`);
       }
     });
 

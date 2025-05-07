@@ -1,7 +1,7 @@
 {
   "name": "camoapi-v2",
   "version": "0.0.1",
-  "main": "proxy.js",
+  "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
     "start": "vercel start"

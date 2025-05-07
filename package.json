@@ -1,7 +1,8 @@
+
 {
-  "name": "camoapi",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "camoapi-v2",
+  "version": "0.0.1",
+  "main": "proxy.js",
   "scripts": {
     "dev": "vercel dev",
     "start": "vercel start"
@@ -11,8 +12,5 @@
     "express": "^4.17.1",
     "cors": "^2.8.5",
     "cheerio": "^1.0.0-rc.10"
-  },
-  "engines": {
-    "node": "18.x"
   }
 }

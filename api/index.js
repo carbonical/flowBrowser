@@ -72,7 +72,7 @@ const proxyRequest = async (req, res) => {
       });
 
       // Send the modified HTML as plain text
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send($.html());
     } else {
       res.status(415).json({ error: 'The URL does not return an HTML document' });

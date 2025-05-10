@@ -3,7 +3,7 @@ const cheerio = require('cheerio');
 const path = require('path');
 const { proxyUrl, eruda } = require('../js/proxyDependencies.js');  // Import proxyUrl and eruda flag from proxyDependencies.js
 
-// Helper function to fetch and return assets
+// Helper function to fetch and return assets (CSS, JS, images)
 const fetchAsset = async (url) => {
   try {
     const response = await axios.get(url, {
@@ -11,7 +11,7 @@ const fetchAsset = async (url) => {
         'User-Agent': 'Mozilla/5.0',
         'Accept': '*/*',
       },
-      responseType: 'arraybuffer', // to handle binary files like images, CSS, JS
+      responseType: 'arraybuffer', // To handle binary files like images, CSS, JS
     });
 
     return response.data;
@@ -21,7 +21,7 @@ const fetchAsset = async (url) => {
   }
 };
 
-// Proxy request handler for HTML
+// Proxy request handler for HTML content
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -48,7 +48,11 @@ const proxyRequest = async (req, res) => {
       if (eruda) {
         $('body').append(`
           <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-          <script>eruda.init();</script>
+          <script>
+            if (typeof eruda === 'function') {
+              eruda.init();
+            }
+          </script>
         `);
       }
 
@@ -111,7 +115,7 @@ const assetProxy = async (req, res) => {
 
 // Main function to handle both HTML and asset requests
 module.exports = async (req, res) => {
-  if (req.query.url && req.query.url.includes('.js') || req.query.url.includes('.css') || req.query.url.includes('.jpg') || req.query.url.includes('.png')) {
+  if (req.query.url && (req.query.url.includes('.js') || req.query.url.includes('.css') || req.query.url.includes('.jpg') || req.query.url.includes('.png') || req.query.url.includes('.gif'))) {
     // If the request is for an asset (CSS, JS, image), handle it here
     await assetProxy(req, res);
   } else {

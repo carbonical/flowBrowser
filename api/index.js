@@ -11,24 +11,33 @@ const proxyRequest = async (req, res) => {
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
-        'Accept': 'text/html',
+        'Accept': 'text/html,image/*,*/*',
       },
+      responseType: 'arraybuffer',
     });
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.send(response.data);
+    const contentType = response.headers['content-type'];
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (contentType.includes('image')) {
+      res.setHeader('Content-Type', contentType);
+      res.send(response.data);
+    } else {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(response.data.toString());
+    }
   } catch (error) {
     console.error('Error proxying resource:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// For Vercel: Serverless function
 if (typeof process.env.VERCEL !== 'undefined') {
   module.exports = proxyRequest;
-}
-// For Cloudflare Pages: Cloudflare Worker
-else if (typeof process.env.CF_PAGES !== 'undefined') {
+} else if (typeof process.env.CF_PAGES !== 'undefined') {
   addEventListener('fetch', event => {
     event.respondWith(
       (async () => {
@@ -43,14 +52,34 @@ else if (typeof process.env.CF_PAGES !== 'undefined') {
           const response = await fetch(targetUrl, {
             headers: {
               'User-Agent': 'Mozilla/5.0',
-              'Accept': 'text/html',
+              'Accept': 'text/html,image/*,*/*',
             },
           });
 
-          const html = await response.text();
-          return new Response(html, {
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-          });
+          const contentType = response.headers.get('content-type');
+
+          const corsHeaders = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          };
+
+          if (contentType.includes('image')) {
+            return new Response(await response.blob(), {
+              headers: { 
+                'Content-Type': contentType, 
+                ...corsHeaders 
+              },
+            });
+          } else {
+            const html = await response.text();
+            return new Response(html, {
+              headers: { 
+                'Content-Type': 'text/html; charset=utf-8', 
+                ...corsHeaders 
+              },
+            });
+          }
         } catch (error) {
           console.error('Error proxying resource:', error);
           return new Response('Internal Server Error', { status: 500 });
@@ -58,9 +87,7 @@ else if (typeof process.env.CF_PAGES !== 'undefined') {
       })()
     );
   });
-}
-// For Render: Express Server
-else {
+} else {
   const express = require('express');
   const app = express();
   const port = process.env.PORT || 3000;

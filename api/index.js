@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { proxyUrl } = require('../js/proxyDependencies.js');  // Correct path (one level up)
+const { proxyUrl, eruda } = require('../js/proxyDependencies.js');  // Correct path to proxyDependencies.js
 
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;
@@ -23,6 +23,14 @@ const proxyRequest = async (req, res) => {
     if (contentType.includes('text/html')) {
       const htmlContent = response.data.toString();
       const $ = cheerio.load(htmlContent);
+
+      if (eruda) {
+        // Inject Eruda script if 'eruda' is true
+        $('body').append(`
+          <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+          <script>eruda.init();</script>
+        `);
+      }
 
       $('a, img, script, link').each((i, el) => {
         const $el = $(el);

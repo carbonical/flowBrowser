@@ -2,6 +2,9 @@ const axios = require('axios');
 const cors = require('cors');
 const cheerio = require('cheerio');
 
+// Import the proxyUrl from the external file
+import { proxyUrl } from './js/proxyDependencies.js'; // Assuming this is the path to proxyDependencies.js
+
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -23,8 +26,6 @@ const proxyRequest = async (req, res) => {
     if (contentType.includes('text/html')) {
       const htmlContent = response.data.toString();
       const $ = cheerio.load(htmlContent);
-
-      const proxyUrl = req.protocol + '://' + req.get('host') + req.baseUrl;
 
       $('a, img, script, link').each((i, el) => {
         const $el = $(el);
@@ -79,8 +80,6 @@ if (typeof process.env.VERCEL !== 'undefined') {
 
           if (contentType.includes('text/html')) {
             const htmlContent = await response.text();
-            const proxyUrl = new URL(event.request.url).origin;
-
             let modifiedHtml = htmlContent.replace(/(href|src)=[\'\"](https?:\/\/[^\s]+)[\'\"]/g, (match, attr, url) => {
               return `${attr}="${proxyUrl}/${encodeURIComponent(url)}"`;
             });

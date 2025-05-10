@@ -10,33 +10,33 @@
   <div id="content"></div>
 
   <script>
-    // Define the API URL
-    const apiUrl = '/api/index.js?url=https://google.com';
-    
-    // Function to fetch content
-    async function fetchContent() {
-      try {
-        // Fetch the data from the API
-        const response = await fetch(apiUrl);
-        
-        // Check if the response is OK (status code 200)
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        
-        // Parse the response as text (HTML content)
-        const htmlContent = await response.text();
-        
-        // Inject the content into a div with id 'content'
-        document.getElementById('content').innerHTML = htmlContent;
-      } catch (error) {
-        // If there's an error, log it to the console
-        console.error('There was a problem with the fetch operation:', error);
-      }
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
     }
-    
-    // Call the fetchContent function to load the HTML when the page is ready
-    fetchContent();
+
+    const fetchUrl = getQueryParam('fetch_url');
+
+    if (fetchUrl) {
+      const apiUrl = `/api/index.js?url=${encodeURIComponent(fetchUrl)}`;
+
+      async function fetchContent() {
+        try {
+          const response = await fetch(apiUrl);
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          const htmlContent = await response.text();
+          document.getElementById('content').innerHTML = htmlContent;
+        } catch (error) {
+          console.error('There was a problem with the fetch operation:', error);
+        }
+      }
+
+      fetchContent();
+    } else {
+      document.getElementById('content').innerHTML = 'Error: No fetch_url parameter provided.';
+    }
   </script>
 
 </body>

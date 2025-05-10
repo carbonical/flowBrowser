@@ -25,7 +25,7 @@ const proxyRequest = async (req, res) => {
       const $ = cheerio.load(htmlContent);
 
       if (eruda) {
-        // Inject Eruda script if 'eruda' is true
+        // Inject Eruda script into the body of the HTML
         $('body').append(`
           <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
           <script>eruda.init();</script>

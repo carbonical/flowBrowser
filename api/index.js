@@ -1,7 +1,19 @@
+const express = require('express');
 const axios = require('axios');
+const cors = require('cors');
+const app = express();
+const port = process.env.PORT || 3000;
 
-// Handler function for Vercel's serverless function
-module.exports = async (req, res) => {
+app.use(cors());
+
+app.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.status(200).end();
+});
+
+app.get('/proxy', async (req, res) => {
   const targetUrl = req.query.url;
 
   if (!targetUrl) {
@@ -9,7 +21,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Fetch the HTML content from the target URL
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
@@ -17,13 +28,16 @@ module.exports = async (req, res) => {
       },
     });
 
-    // Send the raw HTML content as plain text
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Content-Disposition', 'attachment; filename="content.txt"');  // This will force download the text file
-    res.status(200).send(response.data);
+    // Set content type to text/plain to display the content as plain text
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.send(response.data);
 
   } catch (error) {
-    console.error('Error proxying request:', error);
+    console.error('Error proxying resource:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-};
+});
+
+app.listen(port, () => {
+  console.log(`Proxy server is running at http://localhost:${port}`);
+});

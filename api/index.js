@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { proxyUrl, eruda } = require('../js/proxyDependencies.js');  // Correct path to proxyDependencies.js
+const { proxyUrl, eruda } = require('../js/proxyDependencies.js');  // Import proxyUrl and eruda from proxyDependencies.js
 
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;
@@ -32,6 +32,7 @@ const proxyRequest = async (req, res) => {
         `);
       }
 
+      // Replace all relative URLs with the proxied URLs
       $('a, img, script, link').each((i, el) => {
         const $el = $(el);
         const href = $el.attr('href') || $el.attr('src');

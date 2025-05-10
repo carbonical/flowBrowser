@@ -1,5 +1,7 @@
 {
   "functions": {
-    "api/**/*.{js,ts}": {}
+    "api/**/*.{js,ts}": {
+      "memory": 1024
+    }
   }
 }

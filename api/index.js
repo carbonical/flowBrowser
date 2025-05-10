@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { proxyUrl } = require('./js/proxyDependencies.js'); // Correct path
+const { proxyUrl } = require('../js/proxyDependencies.js');  // Correct path (one level up)
 
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;

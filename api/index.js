@@ -1,4 +1,6 @@
 const axios = require('axios');
+const cors = require('cors');
+const cheerio = require('cheerio');
 
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;
@@ -18,16 +20,33 @@ const proxyRequest = async (req, res) => {
 
     const contentType = response.headers['content-type'];
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (contentType.includes('text/html')) {
+      const htmlContent = response.data.toString();
+      const $ = cheerio.load(htmlContent);
 
-    if (contentType.includes('image')) {
+      const proxyUrl = req.protocol + '://' + req.get('host') + req.baseUrl;
+
+      $('a, img, script, link').each((i, el) => {
+        const $el = $(el);
+        const href = $el.attr('href') || $el.attr('src');
+        
+        if (href) {
+          const proxiedUrl = `${proxyUrl}/${encodeURIComponent(href)}`;
+          if ($el.is('a')) {
+            $el.attr('href', proxiedUrl);
+          } else {
+            $el.attr('src', proxiedUrl);
+          }
+        }
+      });
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send($.html());
+    } else if (contentType.includes('image')) {
       res.setHeader('Content-Type', contentType);
       res.send(response.data);
     } else {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(response.data.toString());
+      res.status(415).json({ error: 'Unsupported content type' });
     }
   } catch (error) {
     console.error('Error proxying resource:', error);
@@ -58,27 +77,26 @@ if (typeof process.env.VERCEL !== 'undefined') {
 
           const contentType = response.headers.get('content-type');
 
-          const corsHeaders = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          };
+          if (contentType.includes('text/html')) {
+            const htmlContent = await response.text();
+            const proxyUrl = new URL(event.request.url).origin;
 
-          if (contentType.includes('image')) {
-            return new Response(await response.blob(), {
-              headers: { 
-                'Content-Type': contentType, 
-                ...corsHeaders 
-              },
+            let modifiedHtml = htmlContent.replace(/(href|src)=[\'\"](https?:\/\/[^\s]+)[\'\"]/g, (match, attr, url) => {
+              return `${attr}="${proxyUrl}/${encodeURIComponent(url)}"`;
             });
-          } else {
-            const html = await response.text();
-            return new Response(html, {
+
+            return new Response(modifiedHtml, {
               headers: { 
                 'Content-Type': 'text/html; charset=utf-8', 
-                ...corsHeaders 
+                'Access-Control-Allow-Origin': '*' 
               },
             });
+          } else if (contentType.includes('image')) {
+            return new Response(await response.blob(), {
+              headers: { 'Content-Type': contentType },
+            });
+          } else {
+            return new Response('Unsupported content type', { status: 415 });
           }
         } catch (error) {
           console.error('Error proxying resource:', error);
@@ -91,6 +109,8 @@ if (typeof process.env.VERCEL !== 'undefined') {
   const express = require('express');
   const app = express();
   const port = process.env.PORT || 3000;
+
+  app.use(cors());
 
   app.get('/api', proxyRequest);
 

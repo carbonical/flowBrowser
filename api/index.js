@@ -1,23 +1,29 @@
-import axios from 'axios';
-import express from 'express';
-import cors from 'cors';
+const axios = require('axios');
 
-const app = express();
-app.use(cors()); // Enable CORS
+// Handler function for Vercel's serverless function
+module.exports = async (req, res) => {
+  const targetUrl = req.query.url;
 
-app.get('/api/index.js', async (req, res) => {
-  try {
-    const { url } = req.query;
-    if (!url) {
-      return res.status(400).send('Missing `url` query parameter.');
-    }
-
-    const response = await axios.get(decodeURIComponent(url));
-    res.setHeader('Content-Type', response.headers['content-type']);
-    return res.send(response.data);
-  } catch (error) {
-    return res.status(500).send('Error: ' + error.message);
+  if (!targetUrl) {
+    return res.status(400).json({ error: 'Missing URL parameter' });
   }
-});
 
-export default app;
+  try {
+    // Fetch the HTML content from the target URL
+    const response = await axios.get(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'text/html',
+      },
+    });
+
+    // Send the raw HTML content as plain text
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Disposition', 'attachment; filename="content.txt"');  // This will force download the text file
+    res.status(200).send(response.data);
+
+  } catch (error) {
+    console.error('Error proxying request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

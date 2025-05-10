@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { eruda } = require('../js/proxyDependencies.js');  // Import eruda flag from proxyDependencies.js
+const { proxyUrl, eruda } = require('../js/proxyDependencies.js');
 
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;
@@ -10,7 +10,6 @@ const proxyRequest = async (req, res) => {
   }
 
   try {
-    // Fetch the HTML content of the target URL
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
@@ -20,12 +19,10 @@ const proxyRequest = async (req, res) => {
 
     const contentType = response.headers['content-type'];
 
-    // If the content is HTML, proceed to modify it
     if (contentType && contentType.includes('text/html')) {
       const htmlContent = response.data;
       const $ = cheerio.load(htmlContent);
 
-      // Inject Eruda script if the 'eruda' flag is true
       if (eruda) {
         $('body').append(`
           <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
@@ -33,7 +30,20 @@ const proxyRequest = async (req, res) => {
         `);
       }
 
-      // Send the modified HTML as plain text
+      $('a, img, script, link').each((i, el) => {
+        const $el = $(el);
+        const href = $el.attr('href') || $el.attr('src');
+        
+        if (href) {
+          const proxiedUrl = `${proxyUrl}${encodeURIComponent(href)}`;
+          if ($el.is('a')) {
+            $el.attr('href', proxiedUrl);
+          } else {
+            $el.attr('src', proxiedUrl);
+          }
+        }
+      });
+
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.send($.html());
     } else {

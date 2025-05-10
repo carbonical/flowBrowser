@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { proxyUrl } = require('./js/proxyDependencies.js'); // Correct path for Vercel
+const { proxyUrl } = require('./js/proxyDependencies.js'); // Correct path
 
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;
@@ -29,7 +29,7 @@ const proxyRequest = async (req, res) => {
         const href = $el.attr('href') || $el.attr('src');
         
         if (href) {
-          const proxiedUrl = `${proxyUrl}/${encodeURIComponent(href)}`;
+          const proxiedUrl = `${proxyUrl}${encodeURIComponent(href)}`;
           if ($el.is('a')) {
             $el.attr('href', proxiedUrl);
           } else {

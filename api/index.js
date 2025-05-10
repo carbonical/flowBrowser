@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { proxyUrl, eruda } = require('../js/proxyDependencies.js');  // Import proxyUrl and eruda from proxyDependencies.js
+const { eruda } = require('../js/proxyDependencies.js');  // Import eruda flag from proxyDependencies.js
 
 const proxyRequest = async (req, res) => {
   const targetUrl = req.query.url;
@@ -10,53 +10,37 @@ const proxyRequest = async (req, res) => {
   }
 
   try {
+    // Fetch the HTML content of the target URL
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
-        'Accept': 'text/html,image/*,*/*',
+        'Accept': 'text/html',
       },
-      responseType: 'arraybuffer',
     });
 
     const contentType = response.headers['content-type'];
 
-    if (contentType.includes('text/html')) {
-      const htmlContent = response.data.toString();
+    // If the content is HTML, proceed to modify it
+    if (contentType && contentType.includes('text/html')) {
+      const htmlContent = response.data;
       const $ = cheerio.load(htmlContent);
 
+      // Inject Eruda script if the 'eruda' flag is true
       if (eruda) {
-        // Inject Eruda script into the body of the HTML
         $('body').append(`
           <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
           <script>eruda.init();</script>
         `);
       }
 
-      // Replace all relative URLs with the proxied URLs
-      $('a, img, script, link').each((i, el) => {
-        const $el = $(el);
-        const href = $el.attr('href') || $el.attr('src');
-        
-        if (href) {
-          const proxiedUrl = `${proxyUrl}${encodeURIComponent(href)}`;
-          if ($el.is('a')) {
-            $el.attr('href', proxiedUrl);
-          } else {
-            $el.attr('src', proxiedUrl);
-          }
-        }
-      });
-
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      // Send the modified HTML as plain text
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.send($.html());
-    } else if (contentType.includes('image')) {
-      res.setHeader('Content-Type', contentType);
-      res.send(response.data);
     } else {
-      res.status(415).json({ error: 'Unsupported content type' });
+      res.status(415).json({ error: 'The URL does not return an HTML document' });
     }
   } catch (error) {
-    console.error('Error proxying resource:', error);
+    console.error('Error fetching HTML:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };

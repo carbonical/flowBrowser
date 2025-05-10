@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CamoAPI V2</title>
+</head>
+<body>
+
+  <div id="content"></div>
+
+  <script>
+    // Define the API URL
+    const apiUrl = '/api/index.js?url=https://google.com';
+    
+    // Function to fetch content
+    async function fetchContent() {
+      try {
+        // Fetch the data from the API
+        const response = await fetch(apiUrl);
+        
+        // Check if the response is OK (status code 200)
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        
+        // Parse the response as text (HTML content)
+        const htmlContent = await response.text();
+        
+        // Inject the content into a div with id 'content'
+        document.getElementById('content').innerHTML = htmlContent;
+      } catch (error) {
+        // If there's an error, log it to the console
+        console.error('There was a problem with the fetch operation:', error);
+      }
+    }
+    
+    // Call the fetchContent function to load the HTML when the page is ready
+    fetchContent();
+  </script>
+
+</body>
+</html>

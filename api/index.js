@@ -42,50 +42,44 @@ app.get('/api/index.js', async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
-    $('a').each((i, el) => {
-      const href = $(el).attr('href');
-      if (href && !href.startsWith('http')) {
-        $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
-      }
-    });
+    $('a, img, video, form, link[rel="stylesheet"], script[src], link[rel="icon"], link[rel="apple-touch-icon"]').each((i, el) => {
+      const tagName = el.tagName.toLowerCase();
+      let src, href, action;
 
-    $('img').each((i, el) => {
-      const src = $(el).attr('src');
-      if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
-      }
-    });
-
-    $('video').each((i, el) => {
-      const poster = $(el).attr('poster');
-      if (poster && !poster.startsWith('http')) {
-        $(el).attr('poster', `/api/index.js?url=${encodeURIComponent(poster)}`);
-      }
-
-      const src = $(el).attr('src');
-      if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
-      }
-    });
-
-    $('form').each((i, el) => {
-      const action = $(el).attr('action');
-      if (action && !action.startsWith('http')) {
-        $(el).attr('action', `/api/index.js?url=${encodeURIComponent(action)}`);
-      }
-    });
-
-    $('link[rel="stylesheet"]').each((i, el) => {
-      const href = $(el).attr('href');
-      if (href && !href.startsWith('http')) {
-        $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
-      }
-    });
-
-    $('script[src]').each((i, el) => {
-      const src = $(el).attr('src');
-      if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
+      if (tagName === 'a') {
+        href = $(el).attr('href');
+        if (href && !href.startsWith('http')) {
+          $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
+        }
+      } else if (tagName === 'img') {
+        src = $(el).attr('src');
+        if (src && !src.startsWith('http')) {
+          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
+        }
+      } else if (tagName === 'video') {
+        const poster = $(el).attr('poster');
+        if (poster && !poster.startsWith('http')) {
+          $(el).attr('poster', `/api/index.js?url=${encodeURIComponent(poster)}`);
+        }
+        src = $(el).attr('src');
+        if (src && !src.startsWith('http')) {
+          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
+        }
+      } else if (tagName === 'form') {
+        action = $(el).attr('action');
+        if (action && !action.startsWith('http')) {
+          $(el).attr('action', `/api/index.js?url=${encodeURIComponent(action)}`);
+        }
+      } else if (tagName === 'link') {
+        href = $(el).attr('href');
+        if (href && !href.startsWith('http')) {
+          $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
+        }
+      } else if (tagName === 'script') {
+        src = $(el).attr('src');
+        if (src && !src.startsWith('http')) {
+          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
+        }
       }
     });
 

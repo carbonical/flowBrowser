@@ -17,7 +17,8 @@ app.get('/js/proxy.js', (req, res) => {
   const fileContent = fs.readFileSync(tmpFilePath, 'utf8');
   const contentType = tmpFilePath.endsWith('.js') ? 'application/javascript' :
                       tmpFilePath.endsWith('.json') ? 'application/json' :
-                      tmpFilePath.endsWith('.css') ? 'text/css' : 'text/plain';
+                      tmpFilePath.endsWith('.css') ? 'text/css' :
+                      tmpFilePath.endsWith('.html') ? 'text/html' : 'text/plain';
 
   res.setHeader('Content-Type', contentType);
   return res.send(fileContent);

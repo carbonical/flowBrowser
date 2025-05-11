@@ -1,28 +1,20 @@
+const express = require('express');
 const axios = require('axios');
+const cors = require('cors');
 const cheerio = require('cheerio');
-const path = require('path');
-const { proxyUrl, eruda } = require('../js/proxyDependencies.js');  // Import proxyUrl and eruda flag from proxyDependencies.js
+const app = express();
+const port = process.env.PORT || 3000;
 
-// Helper function to fetch and return assets (CSS, JS, images)
-const fetchAsset = async (url) => {
-  try {
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': '*/*',
-      },
-      responseType: 'arraybuffer', // To handle binary files like images, CSS, JS
-    });
+app.use(cors());
 
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching asset: ${url}`, error);
-    throw new Error(`Failed to fetch asset: ${url}`);
-  }
-};
+app.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.status(200).end();
+});
 
-// Proxy request handler for HTML content
-const proxyRequest = async (req, res) => {
+app.get('/search', async (req, res) => {
   const targetUrl = req.query.url;
 
   if (!targetUrl) {
@@ -30,96 +22,94 @@ const proxyRequest = async (req, res) => {
   }
 
   try {
-    // Fetch the HTML content of the target URL
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
         'Accept': 'text/html',
       },
+      responseType: 'arraybuffer',
     });
 
-    const contentType = response.headers['content-type'];
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Content-Type', response.headers['content-type']);
 
-    if (contentType && contentType.includes('text/html')) {
-      const htmlContent = response.data;
-      const $ = cheerio.load(htmlContent);
+    const $ = cheerio.load(response.data);
 
-      // Inject Eruda script if the 'eruda' flag is true
-      if (eruda) {
-        $('body').append(`
-          <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-          <script>
-            if (typeof eruda === 'function') {
-              eruda.init();
-            }
-          </script>
-        `);
+    $('img').each((i, el) => {
+      const src = $(el).attr('src');
+      if (src && !src.startsWith('http')) {
+        $(el).attr('src', `/proxy?url=${encodeURIComponent(src)}`);
+      }
+    });
+
+    $('a').each((i, el) => {
+      const href = $(el).attr('href');
+      if (href && !href.startsWith('http')) {
+        $(el).attr('href', `/proxy?url=${encodeURIComponent(href)}`);
+      }
+    });
+
+    $('video').each((i, el) => {
+      const poster = $(el).attr('poster');
+      if (poster && !poster.startsWith('http')) {
+        $(el).attr('poster', `/proxy?url=${encodeURIComponent(poster)}`);
       }
 
-      // Replace relative URLs (href, src, etc.) with proxied URLs
-      $('a, img, script, link').each((i, el) => {
-        const $el = $(el);
-        const href = $el.attr('href') || $el.attr('src');
-        
-        if (href) {
-          const proxiedUrl = `${proxyUrl}${encodeURIComponent(href)}`;
-          if ($el.is('a')) {
-            $el.attr('href', proxiedUrl);
-          } else {
-            $el.attr('src', proxiedUrl);
-          }
-        }
-      });
+      const src = $(el).attr('src');
+      if (src && !src.startsWith('http')) {
+        $(el).attr('src', `/proxy?url=${encodeURIComponent(src)}`);
+      }
+    });
 
-      // Send the modified HTML as plain text
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send($.html());
-    } else {
-      res.status(415).json({ error: 'The URL does not return an HTML document' });
-    }
+    $('form').each((i, el) => {
+      const action = $(el).attr('action');
+      if (action && !action.startsWith('http')) {
+        $(el).attr('action', `/proxy?url=${encodeURIComponent(action)}`);
+      }
+    });
+
+    $('body').append(`
+      <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+      <script>eruda.init();</script>
+    `);
+
+    res.send($.html());
+
   } catch (error) {
-    console.error('Error fetching HTML:', error);
+    console.error('Error proxying request:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-};
+});
 
-// Asset proxy handler for CSS, JS, and images
-const assetProxy = async (req, res) => {
-  const assetUrl = decodeURIComponent(req.query.url);
+app.get('/proxy', async (req, res) => {
+  const targetUrl = req.query.url;
 
-  if (!assetUrl) {
+  if (!targetUrl) {
     return res.status(400).json({ error: 'Missing URL parameter' });
   }
 
   try {
-    // Fetch the asset from the target URL
-    const data = await fetchAsset(assetUrl);
+    const response = await axios.get(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'text/html',
+      },
+      responseType: 'arraybuffer',
+    });
 
-    // Set appropriate content type based on file extension
-    const extname = path.extname(assetUrl);
-    let contentType = 'application/octet-stream';
-
-    if (extname === '.css') contentType = 'text/css';
-    if (extname === '.js') contentType = 'application/javascript';
-    if (extname === '.jpg' || extname === '.jpeg') contentType = 'image/jpeg';
-    if (extname === '.png') contentType = 'image/png';
-    if (extname === '.gif') contentType = 'image/gif';
-
+    const contentType = response.headers['content-type'];
     res.setHeader('Content-Type', contentType);
-    res.send(data);  // Send the asset data back to the client
-  } catch (error) {
-    console.error('Error fetching asset:', error);
-    res.status(500).json({ error: 'Failed to fetch asset' });
-  }
-};
 
-// Main function to handle both HTML and asset requests
-module.exports = async (req, res) => {
-  if (req.query.url && (req.query.url.includes('.js') || req.query.url.includes('.css') || req.query.url.includes('.jpg') || req.query.url.includes('.png') || req.query.url.includes('.gif'))) {
-    // If the request is for an asset (CSS, JS, image), handle it here
-    await assetProxy(req, res);
-  } else {
-    // Otherwise, handle it as an HTML page proxy request
-    await proxyRequest(req, res);
+    res.send(response.data);
+
+  } catch (error) {
+    console.error('Error proxying resource:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-};
+});
+
+app.listen(port, () => {
+  console.log(`CORS proxy server is running at http://localhost:${port}`);
+});

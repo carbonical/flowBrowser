@@ -126,6 +126,52 @@ app.get('/api/index.js', async (req, res) => {
   }
 
   try {
+    if (targetUrl.includes('google.com/search')) {
+      // Handling Google Search Redirect Logic
+      const formRegex = /<form\s+class="tsf"[^>]*role="search"[^>]*>[\s\S]*?<\/form>/i;
+
+      let data = await axios.get(targetUrl);
+      data = data.data.replace(formRegex, '');
+
+      return res.send(`
+          <body>
+              <script>
+                  alert('Google will attempt to load from 3–30 or more times before it succeeds.');
+                  window.location.href = '/API/google/index.js?url=' + encodeURIComponent(${JSON.stringify(targetUrl)});
+              </script>
+          </body>
+      `);
+    } else if (targetUrl.includes('https://google.com')) {
+      // Handling Google Main Page
+      const filePath = path.join(process.cwd(), 'static', 'google', 'index.html');
+      let data = fs.readFileSync(filePath, 'utf8');
+
+      // Modify the HTML to add a script for search input redirection
+      data = data.replace(
+        /<\/body>/i,
+        `
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const searchInput = document.querySelector('input[name="q"], textarea[name="q"]');
+                    if (searchInput) {
+                        searchInput.addEventListener('keypress', function (event) {
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                                const searchTerm = searchInput.value;
+                                const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(searchTerm);
+                                window.location.href = '/API/index.js?url=' + encodeURIComponent(searchUrl);
+                            }
+                        });
+                    }
+                });
+            </script>
+        </body>`
+      );
+
+      return res.send(data);
+    }
+
+    // For all other URLs
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',

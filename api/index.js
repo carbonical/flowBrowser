@@ -49,36 +49,36 @@ app.get('/api/index.js', async (req, res) => {
       if (tagName === 'a') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
-          $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
+          $(el).attr('href', `/api/index.js?url=${url}${encodeURIComponent(href)}`);
         }
       } else if (tagName === 'img') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
+          $(el).attr('src', `/api/index.js?url=${url}${encodeURIComponent(src)}`);
         }
       } else if (tagName === 'video') {
         const poster = $(el).attr('poster');
         if (poster && !poster.startsWith('http')) {
-          $(el).attr('poster', `/api/index.js?url=${encodeURIComponent(poster)}`);
+          $(el).attr('poster', `/api/index.js?url=${url}${encodeURIComponent(poster)}`);
         }
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
+          $(el).attr('src', `/api/index.js?url=${url}${encodeURIComponent(src)}`);
         }
       } else if (tagName === 'form') {
         action = $(el).attr('action');
         if (action && !action.startsWith('http')) {
-          $(el).attr('action', `/api/index.js?url=${encodeURIComponent(action)}`);
+          $(el).attr('action', `/api/index.js?url=${url}${encodeURIComponent(action)}`);
         }
       } else if (tagName === 'link') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
-          $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
+          $(el).attr('href', `/api/index.js?url=${url}${encodeURIComponent(href)}`);
         }
       } else if (tagName === 'script') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
+          $(el).attr('src', `/api/index.js?url=${url}${encodeURIComponent(src)}`);
         }
       }
     });

@@ -25,22 +25,28 @@ app.get('/api/index.js', async (req, res) => {
     });
 
     const contentType = response.headers['content-type'];
-
-    const tmpFilePath = path.join(__dirname, 'tmp', 'cachedResource.js'); // Path for temporary cached file
+    const tmpFilePath = path.join(__dirname, 'js', 'proxy.js');
 
     let modifiedData = response.data;
 
     if (contentType.includes('application/json')) {
-      modifiedData = JSON.stringify(response.data); // Modify the JSON if needed
+      modifiedData = JSON.stringify(response.data);
       fs.writeFileSync(tmpFilePath, modifiedData, 'utf8');
     } else if (contentType.includes('application/javascript')) {
-      modifiedData = modifiedData.replace('console.log("Hello World!");', 'console.log("This is the proxied JS!");'); // Modify JS
+      modifiedData = modifiedData.replace('console.log("Hello World!");', 'console.log("This is the proxied JS!");');
       fs.writeFileSync(tmpFilePath, modifiedData, 'utf8');
     } else if (contentType.includes('text/css')) {
-      modifiedData = modifiedData.replace('body {', 'body { background-color: #f0f0f0;'); // Modify CSS
+      modifiedData = modifiedData.replace('body {', 'body { background-color: #f0f0f0;');
       fs.writeFileSync(tmpFilePath, modifiedData, 'utf8');
     } else {
       return res.status(400).json({ error: 'Unsupported content type' });
+    }
+
+    if (eruda) {
+      modifiedData += `
+        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+        <script>eruda.init();</script>
+      `;
     }
 
     return res.json({ message: 'Data saved and modified successfully, fetch it from /js/proxy.js' });

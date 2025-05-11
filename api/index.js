@@ -126,32 +126,6 @@ app.get('/api/index.js', async (req, res) => {
   }
 
   try {
-    if (targetUrl.includes('https://google.com')) {
-      const filePath = path.join(process.cwd(), 'static', 'google', 'index.html');
-      let data = fs.readFileSync(filePath, 'utf8');
-      data = data.replace(
-        /<\/body>/i,
-        
-          `<script>
-            document.addEventListener('DOMContentLoaded', function () {
-              const searchInput = document.querySelector('input[name="q"], textarea[name="q"]');
-              if (searchInput) {
-                searchInput.addEventListener('keypress', function (event) {
-                  if (event.key === 'Enter') {
-                    event.preventDefault();
-                    const searchTerm = searchInput.value;
-                    const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(searchTerm);
-                    window.location.href = '/API/index.js?url=' + encodeURIComponent(searchUrl);
-                  }
-                });
-              }
-            });
-          </script>
-        </body>`
-      );
-      return res.send(data);
-    }
-
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
@@ -166,67 +140,65 @@ app.get('/api/index.js', async (req, res) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Content-Type', response.headers['content-type']);
 
-    // Only handle JSON and JS content
-    const contentType = response.headers['content-type'];
-    if (contentType.includes('application/json') || contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
-      const tmpFilePath = path.join(__dirname, 'js', 'proxy.js');
-      fs.writeFileSync(tmpFilePath, response.data, 'utf8');
-      return res.json({ message: 'Data saved and modified successfully, fetch it from /js/proxy.js' });
-    }
-
-    // Process HTML content (e.g., for links, scripts, etc.)
     const $ = cheerio.load(response.data);
 
-    $('a, img, video, form, iframe, link[rel="stylesheet"], script[src], link[rel="icon"], link[rel="apple-touch-icon"], [srcset]').each((i, el) => {
+    // Proxy all images and related resources
+    $('img, a, iframe, video, source, link[rel="stylesheet"], link[rel="icon"], link[rel="apple-touch-icon"], [srcset]').each((i, el) => {
       const tagName = el.tagName.toLowerCase();
       let src, href, action, poster, srcset;
 
-      if (tagName === 'a') {
-        href = $(el).attr('href');
-        if (href && !href.startsWith('http')) {
-          $(el).attr('href', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(href)}`));
-        }
-      } else if (tagName === 'img') {
+      // Handling <img> tag src
+      if (tagName === 'img') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
+          $(el).attr('src', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(src))}`);
         }
         srcset = $(el).attr('srcset');
         if (srcset) {
           const updatedSrcset = srcset.split(',').map(src => {
             const [url] = src.split(' ');
-            return `${decodeURIComponentCustom(targetUrl + encodeURIComponent(url))}${src.slice(url.length)}`;
+            return `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(url))}${src.slice(url.length)}`;
           }).join(',');
           $(el).attr('srcset', updatedSrcset);
         }
-      } else if (tagName === 'iframe') {
-        src = $(el).attr('src');
-        if (src && !src.startsWith('http')) {
-          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
+      }
+      // Handling <a> tag href
+      else if (tagName === 'a') {
+        href = $(el).attr('href');
+        if (href && !href.startsWith('http')) {
+          $(el).attr('href', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(href))}`);
         }
-      } else if (tagName === 'video') {
+      }
+      // Handling <iframe> tag src
+      else if (tagName === 'iframe') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
+          $(el).attr('src', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(src))}`);
+        }
+      }
+      // Handling <video> tag src
+      else if (tagName === 'video') {
+        src = $(el).attr('src');
+        if (src && !src.startsWith('http')) {
+          $(el).attr('src', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(src))}`);
         }
         poster = $(el).attr('poster');
         if (poster && !poster.startsWith('http')) {
-          $(el).attr('poster', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(poster)}`));
+          $(el).attr('poster', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(poster))}`);
         }
-      } else if (tagName === 'form') {
-        action = $(el).attr('action');
-        if (action && !action.startsWith('http')) {
-          $(el).attr('action', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(action)}`));
-        }
-      } else if (tagName === 'link') {
-        href = $(el).attr('href');
-        if (href && !href.startsWith('http')) {
-          $(el).attr('href', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(href)}`));
-        }
-      } else if (tagName === 'script') {
+      }
+      // Handling <source> tag src
+      else if (tagName === 'source') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
+          $(el).attr('src', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(src))}`);
+        }
+      }
+      // Handling <link> tag href (for stylesheets, icons)
+      else if (tagName === 'link') {
+        href = $(el).attr('href');
+        if (href && !href.startsWith('http')) {
+          $(el).attr('href', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(href))}`);
         }
       }
     });

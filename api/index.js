@@ -20,7 +20,7 @@ app.get('/api/index.js', async (req, res) => {
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
-        'Accept': 'application/json, application/javascript, text/css',
+        'Accept': '*/*',  // Accept all content types
       },
     });
 
@@ -29,17 +29,19 @@ app.get('/api/index.js', async (req, res) => {
 
     let modifiedData = response.data;
 
+    // Handle different content types
     if (contentType.includes('application/json')) {
-      modifiedData = JSON.stringify(response.data);
-      fs.writeFileSync(tmpFilePath, modifiedData, 'utf8');
-    } else if (contentType.includes('application/javascript')) {
+      fs.writeFileSync(tmpFilePath, JSON.stringify(modifiedData), 'utf8');
+    } else if (contentType.includes('application/javascript') || contentType.includes('text/javascript')) {
       modifiedData = modifiedData.replace('console.log("Hello World!");', 'console.log("This is the proxied JS!");');
       fs.writeFileSync(tmpFilePath, modifiedData, 'utf8');
     } else if (contentType.includes('text/css')) {
       modifiedData = modifiedData.replace('body {', 'body { background-color: #f0f0f0;');
       fs.writeFileSync(tmpFilePath, modifiedData, 'utf8');
+    } else if (contentType.includes('text/html')) {
+      fs.writeFileSync(tmpFilePath, modifiedData, 'utf8');
     } else {
-      return res.status(400).json({ error: 'Unsupported content type' });
+      fs.writeFileSync(tmpFilePath, modifiedData, 'utf8');
     }
 
     if (eruda) {

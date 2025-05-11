@@ -3,7 +3,7 @@ const axios = require('axios');
 const cors = require('cors');
 const cheerio = require('cheerio');
 const path = require('path');
-const { eruda } = require('./js/proxyDependencies'); // Use require instead of import
+const { eruda } = require('../js/proxyDependencies'); // Use require instead of import
 
 const app = express();
 const port = process.env.PORT || 3000;

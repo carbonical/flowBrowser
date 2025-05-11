@@ -4,7 +4,7 @@ const cors = require('cors');
 const cheerio = require('cheerio');
 const path = require('path');
 const fs = require('fs');
-const settings = require('./settings.json');
+const { settings } = require('../settings.json');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -238,7 +238,7 @@ app.get('/api/index.js', async (req, res) => {
       }
     });
 
-    if (settings.eruda.enabled) {
+    if (settings.eruda.enabled === true) {
     $('body').append(
       `<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
       <script>eruda.init();</script>`

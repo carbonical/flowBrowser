@@ -158,6 +158,7 @@ app.get('/api/index.js', async (req, res) => {
         'Accept': 'text/html',
       },
       responseType: 'arraybuffer',
+      maxRedirects: 5, // Allow up to 5 redirects
     });
 
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -167,7 +168,7 @@ app.get('/api/index.js', async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
-    $('a, img, video, form, link[rel="stylesheet"], script[src], link[rel="icon"], link[rel="apple-touch-icon"], [srcset]').each((i, el) => {
+    $('a, img, video, form, iframe, link[rel="stylesheet"], script[src], link[rel="icon"], link[rel="apple-touch-icon"], [srcset]').each((i, el) => {
       const tagName = el.tagName.toLowerCase();
       let src, href, action, poster, srcset;
 
@@ -188,6 +189,11 @@ app.get('/api/index.js', async (req, res) => {
             return `${decodeURIComponentCustom(targetUrl + encodeURIComponent(url))}${src.slice(url.length)}`;
           }).join(',');
           $(el).attr('srcset', updatedSrcset);
+        }
+      } else if (tagName === 'iframe') {
+        src = $(el).attr('src');
+        if (src && !src.startsWith('http')) {
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
       } else if (tagName === 'video') {
         src = $(el).attr('src');

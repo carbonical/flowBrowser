@@ -3,6 +3,7 @@ const axios = require('axios');
 const cors = require('cors');
 const cheerio = require('cheerio');
 const path = require('path');
+const fs = require('fs');
 const { eruda } = require('../js/proxyDependencies');
 
 const app = express();
@@ -125,6 +126,32 @@ app.get('/api/index.js', async (req, res) => {
   }
 
   try {
+    if (targetUrl.includes('https://google.com')) {
+      const filePath = path.join(process.cwd(), 'static', 'google', 'index.html');
+      let data = fs.readFileSync(filePath, 'utf8');
+      data = data.replace(
+        /<\/body>/i,
+        `
+          <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              const searchInput = document.querySelector('input[name="q"], textarea[name="q"]');
+              if (searchInput) {
+                searchInput.addEventListener('keypress', function (event) {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const searchTerm = searchInput.value;
+                    const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(searchTerm);
+                    window.location.href = '/API/index.js?url=' + encodeURIComponent(searchUrl);
+                  }
+                });
+              }
+            });
+          </script>
+        </body>`
+      );
+      return res.send(data);
+    }
+
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
@@ -140,9 +167,9 @@ app.get('/api/index.js', async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
-    $('a, img, video, form, link[rel="stylesheet"], script[src], link[rel="icon"], link[rel="apple-touch-icon"]').each((i, el) => {
+    $('a, img, video, form, link[rel="stylesheet"], script[src], link[rel="icon"], link[rel="apple-touch-icon"], [srcset]').each((i, el) => {
       const tagName = el.tagName.toLowerCase();
-      let src, href, action, poster;
+      let src, href, action, poster, srcset;
 
       if (tagName === 'a') {
         href = $(el).attr('href');
@@ -153,6 +180,14 @@ app.get('/api/index.js', async (req, res) => {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
           $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
+        }
+        srcset = $(el).attr('srcset');
+        if (srcset) {
+          const updatedSrcset = srcset.split(',').map(src => {
+            const [url] = src.split(' ');
+            return `${decodeURIComponentCustom(targetUrl + encodeURIComponent(url))}${src.slice(url.length)}`;
+          }).join(',');
+          $(el).attr('srcset', updatedSrcset);
         }
       } else if (tagName === 'video') {
         src = $(el).attr('src');
@@ -188,10 +223,7 @@ app.get('/api/index.js', async (req, res) => {
       `);
     }
 
-    let html = $.html();
-    html = decodeURIComponentCustom(html);
-
-    res.send(html);
+    res.send($.html());
 
   } catch (error) {
     console.error('Error proxying request:', error);

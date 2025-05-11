@@ -158,7 +158,7 @@ app.get('/api/index.js', async (req, res) => {
         'Accept': 'text/html',
       },
       responseType: 'arraybuffer',
-      maxRedirects: 5, // Allow up to 5 redirects
+      maxRedirects: 5,
     });
 
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -212,7 +212,11 @@ app.get('/api/index.js', async (req, res) => {
       } else if (tagName === 'link') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
-          $(el).attr('href', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(href)}`));
+          if (!href.startsWith('/')) {
+            $(el).attr('href', decodeURIComponentCustom(`${targetUrl}/${encodeURIComponent(href)}`));
+          } else {
+            $(el).attr('href', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(href)}`));
+          }
         }
       } else if (tagName === 'script') {
         src = $(el).attr('src');

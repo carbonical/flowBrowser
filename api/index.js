@@ -196,13 +196,13 @@ app.get('/api/index.js', async (req, res) => {
           $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
       } else if (tagName === 'video') {
-        src = $(el).attr('src');
-        if (src && !src.startsWith('http')) {
-          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
-        }
         poster = $(el).attr('poster');
         if (poster && !poster.startsWith('http')) {
           $(el).attr('poster', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(poster)}`));
+        }
+        src = $(el).attr('src');
+        if (src && !src.startsWith('http')) {
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
       } else if (tagName === 'form') {
         action = $(el).attr('action');

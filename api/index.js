@@ -3,14 +3,13 @@ const axios = require('axios');
 const cors = require('cors');
 const cheerio = require('cheerio');
 const path = require('path');
-const { eruda } = require('../js/proxyDependencies'); // Adjust this import based on your setup
+const { eruda } = require('../js/proxyDependencies');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 
-// Pre-flight request handling (CORS)
 app.options('*', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -18,10 +17,8 @@ app.options('*', (req, res) => {
   res.status(200).end();
 });
 
-// Serve static JS files from the 'js' directory
 app.use('/js', express.static(path.join(__dirname, 'js')));
 
-// URL Decoding Function (matches your code)
 function decodeURIComponentCustom(data) {
   return data.replace(/%20/g, ' ')
     .replace(/%21/g, '!')
@@ -120,7 +117,6 @@ function decodeURIComponentCustom(data) {
     .replace(/%7E/g, '~');
 }
 
-// Proxy HTML content and apply URL decoding
 app.get('/api/index.js', async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -144,69 +140,47 @@ app.get('/api/index.js', async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
-    // Define the base proxy URL
-    const proxyUrl = `${req.protocol}://${req.get('host')}/api/index.js?url=${encodeURIComponent(targetUrl)}`;
-
-    // Loop through all the relevant HTML elements and update their URLs
     $('a, img, video, form, link[rel="stylesheet"], script[src], link[rel="icon"], link[rel="apple-touch-icon"]').each((i, el) => {
       const tagName = el.tagName.toLowerCase();
       let src, href, action, poster;
 
-      // Update anchor tags (links)
       if (tagName === 'a') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
-          $(el).attr('href', `${proxyUrl}${encodeURIComponent(href)}`);
+          $(el).attr('href', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(href)}`));
         }
-      }
-
-      // Update image tags
-      else if (tagName === 'img') {
+      } else if (tagName === 'img') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `${proxyUrl}${encodeURIComponent(src)}`);
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
-      }
-
-      // Update video tags (both src and poster)
-      else if (tagName === 'video') {
+      } else if (tagName === 'video') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `${proxyUrl}${encodeURIComponent(src)}`);
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
-
         poster = $(el).attr('poster');
         if (poster && !poster.startsWith('http')) {
-          $(el).attr('poster', `${proxyUrl}${encodeURIComponent(poster)}`);
+          $(el).attr('poster', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(poster)}`));
         }
-      }
-
-      // Update form action
-      else if (tagName === 'form') {
+      } else if (tagName === 'form') {
         action = $(el).attr('action');
         if (action && !action.startsWith('http')) {
-          $(el).attr('action', `${proxyUrl}${encodeURIComponent(action)}`);
+          $(el).attr('action', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(action)}`));
         }
-      }
-
-      // Update link tags (stylesheet, icon)
-      else if (tagName === 'link') {
+      } else if (tagName === 'link') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
-          $(el).attr('href', `${proxyUrl}${encodeURIComponent(href)}`);
+          $(el).attr('href', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(href)}`));
         }
-      }
-
-      // Update script tags
-      else if (tagName === 'script') {
+      } else if (tagName === 'script') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `${proxyUrl}${encodeURIComponent(src)}`);
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
       }
     });
 
-    // Inject Eruda (if available) for debugging
     if (eruda) {
       $('body').append(`
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
@@ -214,13 +188,9 @@ app.get('/api/index.js', async (req, res) => {
       `);
     }
 
-    // Get the modified HTML as a string
     let html = $.html();
-
-    // Decode the HTML content to handle URL-encoded characters
     html = decodeURIComponentCustom(html);
 
-    // Send the updated HTML back as the response
     res.send(html);
 
   } catch (error) {
@@ -229,7 +199,6 @@ app.get('/api/index.js', async (req, res) => {
   }
 });
 
-// Start the Express server
 app.listen(port, () => {
   console.log(`CORS proxy server is running at http://localhost:${port}`);
 });

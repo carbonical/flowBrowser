@@ -4,7 +4,7 @@ const cors = require('cors');
 const cheerio = require('cheerio');
 const path = require('path');
 const fs = require('fs');
-const { eruda } = require('../js/proxyDependencies');
+const settings = require('./settings.json');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -127,7 +127,6 @@ app.get('/api/index.js', async (req, res) => {
 
   try {
     if (targetUrl.includes('google.com/search')) {
-      // Handling Google Search Redirect Logic
       const formRegex = /<form\s+class="tsf"[^>]*role="search"[^>]*>[\s\S]*?<\/form>/i;
 
       let data = await axios.get(targetUrl);
@@ -142,11 +141,9 @@ app.get('/api/index.js', async (req, res) => {
           </body>
       `);
     } else if (targetUrl.includes('https://google.com')) {
-      // Handling Google Main Page
       const filePath = path.join(process.cwd(), 'static', 'google', 'index.html');
       let data = fs.readFileSync(filePath, 'utf8');
 
-      // Modify the HTML to add a script for search input redirection
       data = data.replace(
         /<\/body>/i,
         `
@@ -171,7 +168,6 @@ app.get('/api/index.js', async (req, res) => {
       return res.send(data);
     }
 
-    // For all other URLs
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
@@ -188,12 +184,10 @@ app.get('/api/index.js', async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
-    // Proxy all images and related resources
     $('img, a, iframe, video, source, link[rel="stylesheet"], link[rel="icon"], link[rel="apple-touch-icon"], [srcset]').each((i, el) => {
       const tagName = el.tagName.toLowerCase();
       let src, href, action, poster, srcset;
 
-      // Handling <img> tag src
       if (tagName === 'img') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
@@ -208,21 +202,18 @@ app.get('/api/index.js', async (req, res) => {
           $(el).attr('srcset', updatedSrcset);
         }
       }
-      // Handling <a> tag href
       else if (tagName === 'a') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
           $(el).attr('href', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(href))}`);
         }
       }
-      // Handling <iframe> tag src
       else if (tagName === 'iframe') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
           $(el).attr('src', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(src))}`);
         }
       }
-      // Handling <video> tag src
       else if (tagName === 'video') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
@@ -233,14 +224,12 @@ app.get('/api/index.js', async (req, res) => {
           $(el).attr('poster', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(poster))}`);
         }
       }
-      // Handling <source> tag src
       else if (tagName === 'source') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
           $(el).attr('src', `${targetUrl}${decodeURIComponentCustom(encodeURIComponent(src))}`);
         }
       }
-      // Handling <link> tag href (for stylesheets, icons)
       else if (tagName === 'link') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
@@ -249,13 +238,12 @@ app.get('/api/index.js', async (req, res) => {
       }
     });
 
-    if (eruda === true) {
+    if (settings.eruda.enabled) {
     $('body').append(
       `<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
       <script>eruda.init();</script>`
     );
   }
-    
     res.send($.html());
 
   } catch (error) {

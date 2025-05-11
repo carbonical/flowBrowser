@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const cheerio = require('cheerio');
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -13,6 +14,9 @@ app.options('*', (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.status(200).end();
 });
+
+// Serve static files (e.g., JS files)
+app.use('/js', express.static(path.join(__dirname, 'js')));
 
 // Main endpoint for scraping or proxying
 app.get('/api/index.js', async (req, res) => {
@@ -37,6 +41,9 @@ app.get('/api/index.js', async (req, res) => {
     res.setHeader('Content-Type', response.headers['content-type']);
 
     const $ = cheerio.load(response.data);
+
+    // Dynamically import the proxyDependencies.js file to check the eruda setting
+    const { eruda } = await import('./js/proxyDependencies.js');
 
     // Scraping and updating relative URLs to use /api/index.js/proxy
     $('img').each((i, el) => {
@@ -72,11 +79,13 @@ app.get('/api/index.js', async (req, res) => {
       }
     });
 
-    // Append eruda (for debugging in the browser)
-    $('body').append(`
-      <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-      <script>eruda.init();</script>
-    `);
+    // Conditionally append eruda (Dev Console) based on the setting from proxyDependencies.js
+    if (eruda) {
+      $('body').append(`
+        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+        <script>eruda.init();</script>
+      `);
+    }
 
     res.send($.html());
 

@@ -3,6 +3,8 @@ const axios = require('axios');
 const cors = require('cors');
 const cheerio = require('cheerio');
 const path = require('path');
+const { eruda } = require('./js/proxyDependencies'); // Use require instead of import
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -41,9 +43,6 @@ app.get('/api/index.js', async (req, res) => {
     res.setHeader('Content-Type', response.headers['content-type']);
 
     const $ = cheerio.load(response.data);
-
-    // Dynamically import the proxyDependencies.js file to check the eruda setting
-    const { eruda } = await import('./js/proxyDependencies.js');
 
     // Scraping and updating relative URLs to use /api/index.js/proxy
     $('img').each((i, el) => {

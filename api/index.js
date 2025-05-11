@@ -1,25 +1,3 @@
-const express = require('express');
-const axios = require('axios');
-const cors = require('cors');
-const cheerio = require('cheerio');
-const path = require('path');
-const fs = require('fs');
-const { eruda } = require('../js/proxyDependencies');
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(cors());
-
-app.options('*', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.status(200).end();
-});
-
-app.use('/js', express.static(path.join(__dirname, 'js')));
-
 app.get('/api/index.js', async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -51,49 +29,53 @@ app.get('/api/index.js', async (req, res) => {
       if (tagName === 'a') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
-          $(el).attr('href', `/api/index.js?url=${encodeURIComponent(targetUrl + href)}`);
+          $(el).attr('href', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(href)}`));
         }
       } else if (tagName === 'img') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(targetUrl + src)}`);
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
         srcset = $(el).attr('srcset');
         if (srcset) {
           const updatedSrcset = srcset.split(',').map(src => {
             const [url] = src.split(' ');
-            return `/api/index.js?url=${encodeURIComponent(targetUrl + url)}${src.slice(url.length)}`;
+            return `${decodeURIComponentCustom(targetUrl + encodeURIComponent(url))}${src.slice(url.length)}`;
           }).join(',');
           $(el).attr('srcset', updatedSrcset);
         }
       } else if (tagName === 'iframe') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(targetUrl + src)}`);
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
       } else if (tagName === 'video') {
         poster = $(el).attr('poster');
         if (poster && !poster.startsWith('http')) {
-          $(el).attr('poster', `/api/index.js?url=${encodeURIComponent(targetUrl + poster)}`);
+          $(el).attr('poster', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(poster)}`));
         }
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(targetUrl + src)}`);
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
       } else if (tagName === 'form') {
         action = $(el).attr('action');
         if (action && !action.startsWith('http')) {
-          $(el).attr('action', `/api/index.js?url=${encodeURIComponent(targetUrl + action)}`);
+          $(el).attr('action', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(action)}`));
         }
       } else if (tagName === 'link') {
         href = $(el).attr('href');
         if (href && !href.startsWith('http')) {
-          $(el).attr('href', `/api/index.js?url=${encodeURIComponent(targetUrl + href)}`);
+          if (!href.startsWith('/')) {
+            $(el).attr('href', decodeURIComponentCustom(`${targetUrl}/${encodeURIComponent(href)}`));
+          } else {
+            $(el).attr('href', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(href)}`));
+          }
         }
       } else if (tagName === 'script') {
         src = $(el).attr('src');
         if (src && !src.startsWith('http')) {
-          $(el).attr('src', `/api/index.js?url=${encodeURIComponent(targetUrl + src)}`);
+          $(el).attr('src', decodeURIComponentCustom(`${targetUrl}${encodeURIComponent(src)}`));
         }
       }
     });
@@ -111,8 +93,4 @@ app.get('/api/index.js', async (req, res) => {
     console.error('Error proxying request:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-});
-
-app.listen(port, () => {
-  console.log(`CORS proxy server is running at http://localhost:${port}`);
 });

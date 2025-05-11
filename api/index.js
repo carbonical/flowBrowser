@@ -249,13 +249,13 @@ app.get('/api/index.js', async (req, res) => {
       }
     });
 
-    if (eruda) {
-      $('body').append(
-        `<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-        <script>eruda.init();</script>`
-      );
-    }
-
+    if (eruda === true) {
+    $('body').append(
+      `<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+      <script>eruda.init();</script>`
+    );
+  }
+    
     res.send($.html());
 
   } catch (error) {

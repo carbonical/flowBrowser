@@ -14,7 +14,8 @@ app.options('*', (req, res) => {
   res.status(200).end();
 });
 
-app.get('/search', async (req, res) => {
+// Main endpoint for scraping or proxying
+app.get('/api/index.js', async (req, res) => {
   const targetUrl = req.query.url;
 
   if (!targetUrl) {
@@ -37,39 +38,41 @@ app.get('/search', async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
+    // Scraping and updating relative URLs to use /api/index.js/proxy
     $('img').each((i, el) => {
       const src = $(el).attr('src');
       if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/proxy?url=${encodeURIComponent(src)}`);
+        $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
       }
     });
 
     $('a').each((i, el) => {
       const href = $(el).attr('href');
       if (href && !href.startsWith('http')) {
-        $(el).attr('href', `/proxy?url=${encodeURIComponent(href)}`);
+        $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
       }
     });
 
     $('video').each((i, el) => {
       const poster = $(el).attr('poster');
       if (poster && !poster.startsWith('http')) {
-        $(el).attr('poster', `/proxy?url=${encodeURIComponent(poster)}`);
+        $(el).attr('poster', `/api/index.js?url=${encodeURIComponent(poster)}`);
       }
 
       const src = $(el).attr('src');
       if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/proxy?url=${encodeURIComponent(src)}`);
+        $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
       }
     });
 
     $('form').each((i, el) => {
       const action = $(el).attr('action');
       if (action && !action.startsWith('http')) {
-        $(el).attr('action', `/proxy?url=${encodeURIComponent(action)}`);
+        $(el).attr('action', `/api/index.js?url=${encodeURIComponent(action)}`);
       }
     });
 
+    // Append eruda (for debugging in the browser)
     $('body').append(`
       <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
       <script>eruda.init();</script>
@@ -83,7 +86,8 @@ app.get('/search', async (req, res) => {
   }
 });
 
-app.get('/proxy', async (req, res) => {
+// Proxying the resource under /api/index.js
+app.get('/api/index.js/proxy', async (req, res) => {
   const targetUrl = req.query.url;
 
   if (!targetUrl) {

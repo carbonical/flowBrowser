@@ -3,7 +3,7 @@ const axios = require('axios');
 const cors = require('cors');
 const cheerio = require('cheerio');
 const path = require('path');
-const { eruda } = require('../js/proxyDependencies'); // Use require instead of import
+const { eruda } = require('../js/proxyDependencies');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,10 +17,8 @@ app.options('*', (req, res) => {
   res.status(200).end();
 });
 
-// Serve static files (e.g., JS files)
 app.use('/js', express.static(path.join(__dirname, 'js')));
 
-// Main endpoint for scraping or proxying
 app.get('/api/index.js', async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -44,18 +42,17 @@ app.get('/api/index.js', async (req, res) => {
 
     const $ = cheerio.load(response.data);
 
-    // Scraping and updating relative URLs to use /api/index.js/proxy
-    $('img').each((i, el) => {
-      const src = $(el).attr('src');
-      if (src && !src.startsWith('http')) {
-        $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
-      }
-    });
-
     $('a').each((i, el) => {
       const href = $(el).attr('href');
       if (href && !href.startsWith('http')) {
         $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
+      }
+    });
+
+    $('img').each((i, el) => {
+      const src = $(el).attr('src');
+      if (src && !src.startsWith('http')) {
+        $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
       }
     });
 
@@ -78,7 +75,20 @@ app.get('/api/index.js', async (req, res) => {
       }
     });
 
-    // Conditionally append eruda (Dev Console) based on the setting from proxyDependencies.js
+    $('link[rel="stylesheet"]').each((i, el) => {
+      const href = $(el).attr('href');
+      if (href && !href.startsWith('http')) {
+        $(el).attr('href', `/api/index.js?url=${encodeURIComponent(href)}`);
+      }
+    });
+
+    $('script[src]').each((i, el) => {
+      const src = $(el).attr('src');
+      if (src && !src.startsWith('http')) {
+        $(el).attr('src', `/api/index.js?url=${encodeURIComponent(src)}`);
+      }
+    });
+
     if (eruda) {
       $('body').append(`
         <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
@@ -94,8 +104,7 @@ app.get('/api/index.js', async (req, res) => {
   }
 });
 
-// Proxying the resource under /api/index.js
-app.get('/api/index.js/proxy', async (req, res) => {
+app.get('/api/index.js', async (req, res) => {
   const targetUrl = req.query.url;
 
   if (!targetUrl) {
